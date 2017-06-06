@@ -2,25 +2,35 @@ var request = require('request');
 var fs = require('fs');
 var GITHUB_USER = 'caitlinquon';
 var GITHUB_TOKEN = '9a074496dee278a1861c904f3fc0c909f650a2fa';
-var requestURL = 'https://' + GITHUB_USER + ':' + GITHUB_TOKEN + '@api.github.com/repos/jquery/jquery/contributors';
+var owner = process.argv[2];
+var repo = process.argv[3];
 
-function getRepoContributors(repoOwner, repoName, cb){
+function getRepoContributors(repoOwner, repoName, cb) {
+  var requestURL = 'https://'+ GITHUB_USER + ':' + GITHUB_TOKEN + '@api.github.com/repos/' + repoOwner + '/' + repoName + '/contributors';
   var options = {
-    url: requestURL, 
+    url: requestURL,
     headers: {
-      'user-agent': 'LHL Project'
-    }
-  };
-  request.get(options, cb);
+      'User-Agent' : 'caitlinquon'
+    }, 
+    json: true 
+  }
+  request.get(options, function(err, response, body){
+    cb(err, body);
+  })
 };
 
+function downloadImageByURL(url, filePath) {
+  request(url)
+  .pipe(fs.createWriteStream(filePath));
+}
 
-getRepoContributors("jquery", "jquery", function(err, result){
-  var emptyArray = [];
-  var data = JSON.parse(result.body);
-  data.forEach(function(item, index, array){
-    emptyArray.push(item.avatar_url);
-  });
-    
-});
+getRepoContributors(owner, repo, function(err, body) {
+ body.forEach(function(item, index, array){
+  downloadImageByURL(item.avatar_url, './avatars/' + item.login + '.jpg')
+  })
+  
+})
+
+
+
 
